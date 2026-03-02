@@ -1,0 +1,19 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include SECURITY.md
+include requirements.txt
+include Dockerfile
+include docker-compose.yml
+include .gitignore
+
+recursive-include services *.py
+recursive-include models *.py
+recursive-include data *
+recursive-exclude data/faiss_index *
+recursive-exclude __pycache__ *
+
+include index.html
+include config.py
+include main.py

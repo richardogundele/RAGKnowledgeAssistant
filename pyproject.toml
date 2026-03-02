@@ -1,0 +1,137 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "government-knowledge-assistant"
+version = "1.0.0"
+description = "An intelligent document search system powered by RAG with source verification and confidence scoring"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Government Knowledge Assistant Contributors"},
+]
+keywords = [
+    "rag",
+    "retrieval-augmented-generation",
+    "llm",
+    "document-search",
+    "question-answering",
+    "government",
+    "ai",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+
+dependencies = [
+    "fastapi>=0.95.0",
+    "uvicorn>=0.20.0",
+    "pydantic>=2.0.0",
+    "requests>=2.28.0",
+    "PyPDF2>=3.0.0",
+    "sentence-transformers>=2.2.0",
+    "faiss-cpu>=1.7.0",
+    "python-dotenv>=0.19.0",
+    "ollama>=0.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=5.0.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
+    "pip-audit>=1.1.0",
+    "sphinx>=5.0.0",
+]
+
+gpu = [
+    "faiss-gpu>=1.7.0",
+]
+
+prod = [
+    "gunicorn>=20.0.0",
+    "python-multipart>=0.0.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/richardogundele/rag_knowledge_assistant"
+Documentation = "https://github.com/richardogundele/rag_knowledge_assistant#documentation"
+Repository = "https://github.com/richardogundele/rag_knowledge_assistant.git"
+"Bug Tracker" = "https://github.com/richardogundele/rag_knowledge_assistant/issues"
+"Source Code" = "https://github.com/richardogundele/rag_knowledge_assistant"
+
+[tool.setuptools]
+packages = ["services", "models"]
+
+[tool.setuptools.package-data]
+# Include package data files
+"" = ["*.py", "*.html", "*.md"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+disallow_incomplete_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=services --cov=models"
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.coverage.run]
+source = ["services", "models"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

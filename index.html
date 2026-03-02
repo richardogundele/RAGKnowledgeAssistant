@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Assistant - UK Government</title>
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica Neue', sans-serif;
+            background: #f3f2f1;
+            min-height: 100vh;
+            color: #0b0c0c;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: #fff;
+            padding: 20px 40px;
+            border-bottom: 3px solid #003078;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .header h1 {
+            font-size: 1.95rem;
+            font-weight: bold;
+            color: #003078;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            color: #626a6d;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            padding: 16px 40px;
+            background: #fff;
+            border-bottom: 1px solid #b1b4b6;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #b1b4b6;
+        }
+
+        .status-dot.active {
+            background: #00703c;
+        }
+
+        .status-dot.warning {
+            background: #f47738;
+        }
+
+        .status-dot.error {
+            background: #d4351c;
+        }
+
+        /* Main Chat Area */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        /* Messages Panel */
+        .messages-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-left: 1px solid #b1b4b6;
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #fff;
+        }
+
+        /* Message Bubbles */
+        .message {
+            max-width: 90%;
+            padding: 16px 20px;
+            border-radius: 6px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+            font-size: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: #003078;
+            color: #fff;
+            align-self: flex-end;
+            max-width: 75%;
+        }
+
+        .message.assistant {
+            background: #f3f2f1;
+            color: #0b0c0c;
+            align-self: flex-start;
+            border: 1px solid #b1b4b6;
+        }
+
+        .message.system {
+            background: #e7f3ff;
+            color: #003078;
+            align-self: flex-start;
+            border-left: 4px solid #003078;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #d4351c;
+            align-self: flex-start;
+            border-left: 4px solid #d4351c;
+        }
+
+        /* Message Metadata */
+        .message-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .badge.confidence-high {
+            background: #d4f0d4;
+            color: #00703c;
+        }
+
+        .badge.confidence-medium {
+            background: #fff3cd;
+            color: #664d03;
+        }
+
+        .badge.confidence-low {
+            background: #fdd;
+            color: #9e2a0e;
+        }
+
+        .badge.confidence-insufficient {
+            background: #e8e8e8;
+            color: #505050;
+        }
+
+        .badge.grounded {
+            background: #d4e7f0;
+            color: #1e3a7f;
+        }
+
+        .badge.sources {
+            background: #e8d5f0;
+            color: #5a2f7d;
+        }
+
+        /* Loading Indicator */
+        .loading {
+            display: flex;
+            gap: 8px;
+            padding: 16px 20px;
+            align-self: flex-start;
+        }
+
+        .loading span {
+            width: 10px;
+            height: 10px;
+            background: #003078;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .loading span:nth-child(1) { animation-delay: -0.32s; }
+        .loading span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px 30px;
+            background: #fff;
+            border-top: 1px solid #b1b4b6;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #b1b4b6;
+            border-radius: 3px;
+            background: #fff;
+            color: #0b0c0c;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #003078;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #626a6d;
+        }
+
+        .input-wrapper button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 3px;
+            background: #003078;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .input-wrapper button:hover {
+            background: #002350;
+        }
+
+        .input-wrapper button:active {
+            transform: scale(0.98);
+        }
+
+        .input-wrapper button:disabled {
+            background: #b1b4b6;
+            cursor: not-allowed;
+        }
+
+        /* Sources Panel */
+        .sources-panel {
+            flex: 1;
+            background: #f8f8f8;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-left: 1px solid #b1b4b6;
+        }
+
+        .sources-header {
+            padding: 20px;
+            background: #fff;
+            border-bottom: 2px solid #003078;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0b0c0c;
+        }
+
+        .sources-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .source-card {
+            background: #fff;
+            border-radius: 3px;
+            padding: 16px;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            border: 1px solid #b1b4b6;
+        }
+
+        .source-card:hover {
+            background: #f3f2f1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .source-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .source-name {
+            font-weight: 700;
+            color: #003078;
+            font-size: 0.95rem;
+        }
+
+        .source-score {
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            background: #e7f3ff;
+            border-radius: 3px;
+            color: #003078;
+            white-space: nowrap;
+        }
+
+        .source-content {
+            font-size: 0.95rem;
+            color: #505050;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .source-content.expanded {
+            -webkit-line-clamp: unset;
+        }
+
+        .source-page {
+            font-size: 0.85rem;
+            color: #626a6d;
+            margin-top: 10px;
+        }
+
+        .no-sources {
+            text-align: center;
+            color: #626a6d;
+            padding: 40px 20px;
+            font-size: 1rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 20px 40px;
+            background: #fff;
+            border-bottom: 1px solid #b1b4b6;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 11px 20px;
+            border: 2px solid #003078;
+            border-radius: 3px;
+            background: transparent;
+            color: #003078;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: Arial, sans-serif;
+        }
+
+        .action-btn:hover {
+            background: #f3f2f1;
+        }
+
+        .action-btn.primary {
+            background: #003078;
+            color: #fff;
+            border-color: #003078;
+        }
+
+        .action-btn.primary:hover {
+            background: #002350;
+        }
+
+        /* Welcome Message */
+        .welcome {
+            text-align: center;
+            padding: 60px 40px;
+            color: #505050;
+        }
+
+        .welcome h2 {
+            color: #003078;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .welcome p {
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .welcome-hint {
+            background: #e7f3ff;
+            border-left: 4px solid #003078;
+            padding: 16px;
+            margin-top: 30px;
+            border-radius: 3px;
+            color: #1e3a7f;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .chat-container {
+                flex-direction: column;
+            }
+
+            .sources-panel {
+                max-height: 300px;
+                border-left: none;
+                border-top: 1px solid #b1b4b6;
+            }
+
+            .message {
+                max-width: 95%;
+            }
+
+            .header {
+                padding: 15px 20px;
+            }
+
+            .action-buttons {
+                padding: 15px 20px;
+            }
+
+            .input-area {
+                padding: 15px 20px;
+            }
+
+            .messages {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Government Knowledge Assistant</h1>
+            <p>Search and get answers from your official documents using AI</p>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-dot" id="apiStatus"></span>
+                <span id="apiStatusText">Checking system...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-dot" id="ollamaStatus"></span>
+                <span id="ollamaStatusText">Checking AI engine...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-dot" id="docsStatus"></span>
+                <span id="docsStatusText">Documents loaded: --</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn primary" onclick="ingestDocuments()">
+                Upload Documents
+            </button>
+            <button class="action-btn" onclick="checkHealth()">
+                Refresh Status
+            </button>
+            <button class="action-btn" onclick="runEvaluation()">
+                Test System
+            </button>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-container">
+            <!-- Messages Panel -->
+            <div class="messages-panel">
+                <div class="messages" id="messages">
+                    <div class="welcome">
+                        <h2>Welcome to Government Knowledge Assistant</h2>
+                        <p>This system helps you find information from your documents quickly and easily.</p>
+                        <div class="welcome-hint">
+                            <strong>Step 1:</strong> Click "Upload Documents" to add your official documents (PDFs or text files)<br>
+                            <strong>Step 2:</strong> Ask any question about your documents<br>
+                            <strong>Step 3:</strong> The system will find and present the most relevant information
+                        </div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="questionInput" 
+                            placeholder="Ask your question here... (e.g., 'What are the main policies?')"
+                            onkeypress="handleKeyPress(event)"
+                        >
+                        <button onclick="askQuestion()" id="sendBtn">Search</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sources Panel -->
+            <div class="sources-panel">
+                <div class="sources-header">📋 Reference Documents</div>
+                <div class="sources-list" id="sourcesList">
+                    <div class="no-sources">
+                        Source documents will appear here after you search
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000';
+
+        // Check system health on load
+        document.addEventListener('DOMContentLoaded', checkHealth);
+
+        // Check health status (with timeout for faster response)
+        async function checkHealth() {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                
+                const response = await fetch(`${API_BASE}/health`, { signal: controller.signal });
+                const data = await response.json();
+                clearTimeout(timeout);
+
+                // API Status
+                updateStatus('apiStatus', 'apiStatusText', true, '✓ System Ready');
+
+                // AI Engine Status
+                const ollamaReady = data.ollama?.model_ready;
+                updateStatus('ollamaStatus', 'ollamaStatusText', ollamaReady, 
+                    ollamaReady ? `✓ AI Ready` : '✗ AI Not Ready');
+
+                // Documents Status
+                const chunks = data.vector_store_chunks || 0;
+                updateStatus('docsStatus', 'docsStatusText', chunks > 0, `Documents loaded: ${chunks} sections`);
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    updateStatus('apiStatus', 'apiStatusText', false, '✗ System Timeout');
+                } else {
+                    updateStatus('apiStatus', 'apiStatusText', false, '✗ System Error');
+                }
+                updateStatus('ollamaStatus', 'ollamaStatusText', false, '✗ AI Unknown');
+                updateStatus('docsStatus', 'docsStatusText', false, 'Documents: Unknown');
+            }
+        }
+
+        // Update status indicator
+        function updateStatus(dotId, textId, isActive, text) {
+            const dot = document.getElementById(dotId);
+            const textEl = document.getElementById(textId);
+            
+            dot.className = 'status-dot ' + (isActive ? 'active' : 'error');
+            textEl.textContent = text;
+        }
+
+        // Ingest documents
+        async function ingestDocuments() {
+            const messagesEl = document.getElementById('messages');
+            
+            addMessage('system', 'Preparing to upload documents... Please wait.');
+            
+            try {
+                const response = await fetch(`${API_BASE}/ingest`, { method: 'POST' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    addMessage('assistant', 
+                        `✓ Successfully processed ${data.documents_processed} documents.\n\n` +
+                        `The system has created ${data.chunks_created} searchable sections from your documents. ` +
+                        `You can now ask questions about any content in these documents.`
+                    );
+                    checkHealth();
+                } else {
+                    addMessage('error', `Upload failed: ${data.detail || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addMessage('error', `Error: ${error.message}. Please ensure the system is running.`);
+            }
+        }
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                askQuestion();
+            }
+        }
+
+        // Ask a question
+        async function askQuestion() {
+            const input = document.getElementById('questionInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const question = input.value.trim();
+
+            if (!question) return;
+
+            // Clear input and disable button
+            input.value = '';
+            sendBtn.disabled = true;
+
+            // Add user message
+            addMessage('user', question);
+
+            // Show loading indicator
+            const loadingId = showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+
+                // Remove loading indicator
+                hideLoading(loadingId);
+
+                if (response.ok) {
+                    // Add assistant message with metadata
+                    addAssistantMessage(data);
+                    
+                    // Update sources panel
+                    updateSources(data.sources);
+                } else {
+                    addMessage('error', `Error: ${data.detail || 'Unknown error'}`);
+                }
+
+            } catch (error) {
+                hideLoading(loadingId);
+                addMessage('error', `Error: ${error.message}. Please ensure the system is running.`);
+            }
+
+            sendBtn.disabled = false;
+            input.focus();
+        }
+
+        // Add a simple message
+        function addMessage(type, text) {
+            const messagesEl = document.getElementById('messages');
+            
+            // Remove welcome message if present
+            const welcome = messagesEl.querySelector('.welcome');
+            if (welcome) welcome.remove();
+
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = text;
+            
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        // Add assistant message with metadata
+        function addAssistantMessage(data) {
+            const messagesEl = document.getElementById('messages');
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message assistant';
+            
+            // Answer text
+            const textEl = document.createElement('div');
+            textEl.textContent = data.answer;
+            messageEl.appendChild(textEl);
+
+            // Metadata badges
+            const metaEl = document.createElement('div');
+            metaEl.className = 'message-meta';
+
+            // Confidence badge with friendly text
+            const confBadge = document.createElement('span');
+            const confText = {
+                'high': 'High Confidence',
+                'medium': 'Medium Confidence',
+                'low': 'Low Confidence',
+                'insufficient': 'Insufficient Data'
+            }[data.confidence] || 'Unknown';
+            confBadge.className = `badge confidence-${data.confidence}`;
+            confBadge.textContent = confText;
+            metaEl.appendChild(confBadge);
+
+            // Grounded badge
+            if (data.is_grounded) {
+                const groundedBadge = document.createElement('span');
+                groundedBadge.className = 'badge grounded';
+                groundedBadge.textContent = 'Based on your documents';
+                metaEl.appendChild(groundedBadge);
+            }
+
+            // Sources count badge
+            if (data.retrieval_count > 0) {
+                const sourcesBadge = document.createElement('span');
+                sourcesBadge.className = 'badge sources';
+                sourcesBadge.textContent = `Found ${data.retrieval_count} relevant section${data.retrieval_count !== 1 ? 's' : ''}`;
+                metaEl.appendChild(sourcesBadge);
+            }
+
+            messageEl.appendChild(metaEl);
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        // Show loading indicator
+        function showLoading() {
+            const messagesEl = document.getElementById('messages');
+            const loadingEl = document.createElement('div');
+            loadingEl.className = 'loading';
+            loadingEl.id = 'loading-' + Date.now();
+            loadingEl.innerHTML = '<span></span><span></span><span></span>';
+            messagesEl.appendChild(loadingEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return loadingEl.id;
+        }
+
+        // Hide loading indicator
+        function hideLoading(loadingId) {
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) loadingEl.remove();
+        }
+
+        // Update sources panel
+        function updateSources(sources) {
+            const sourcesList = document.getElementById('sourcesList');
+            
+            if (!sources || sources.length === 0) {
+                sourcesList.innerHTML = '<div class="no-sources">No matching sections found in your documents</div>';
+                return;
+            }
+
+            sourcesList.innerHTML = '';
+
+            sources.forEach((source, index) => {
+                const card = document.createElement('div');
+                card.className = 'source-card';
+                card.onclick = () => toggleSourceExpand(card);
+
+                const header = document.createElement('div');
+                header.className = 'source-card-header';
+
+                const name = document.createElement('span');
+                name.className = 'source-name';
+                name.textContent = source.chunk.source;
+
+                const score = document.createElement('span');
+                score.className = 'source-score';
+                const matchPercent = (source.similarity_score * 100).toFixed(0);
+                score.textContent = `${matchPercent}% match`;
+
+                header.appendChild(name);
+                header.appendChild(score);
+
+                const content = document.createElement('div');
+                content.className = 'source-content';
+                content.textContent = source.chunk.content;
+
+                card.appendChild(header);
+                card.appendChild(content);
+
+                if (source.chunk.page_number) {
+                    const page = document.createElement('div');
+                    page.className = 'source-page';
+                    page.textContent = `📄 Page ${source.chunk.page_number}`;
+                    card.appendChild(page);
+                }
+
+                sourcesList.appendChild(card);
+            });
+        }
+
+        // Toggle source card expansion
+        function toggleSourceExpand(card) {
+            const content = card.querySelector('.source-content');
+            content.classList.toggle('expanded');
+        }
+
+        // Run evaluation test suite
+        async function runEvaluation() {
+            addMessage('system', 'Running system tests... Please wait.');
+            
+            try {
+                const response = await fetch(`${API_BASE}/evaluate`, { method: 'POST' });
+                const data = await response.json();
+
+                if (response.ok) {
+                    const summary = data.summary;
+                    const evalMessage = 
+                        `✓ System Test Complete!\n\n` +
+                        `✓ Tests Completed: ${summary.total_tests}\n` +
+                        `✓ Successful: ${summary.correct}\n` +
+                        `✓ Accuracy Rate: ${(summary.accuracy * 100).toFixed(1)}%`;
+                    
+                    addMessage('assistant', evalMessage);
+                    
+                    // Log detailed results to console
+                    console.log('Full evaluation results:', data.results);
+                    addMessage('system', `Detailed test results logged to system console`);
+                } else {
+                    addMessage('error', `Test failed: ${data.detail || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addMessage('error', `Error running test: ${error.message}. Please ensure the system is running.`);
+            }
+        }
+    </script>
+</body>
+</html>
